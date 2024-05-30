@@ -1,0 +1,16 @@
+### generate and send otp
+POST http://localhost:4004/rest/otp/generateAndSendOTP
+Content-Type: application/json
+
+{
+    "userId":"pallavjadav@gmail.com"
+}
+
+###
+POST http://localhost:4004/rest/otp/verifyOTP
+Content-Type: application/json
+
+{
+    "userId":"pallavjadav@gmail.com",
+    "otp":"469885"
+}
