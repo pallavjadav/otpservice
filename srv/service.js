@@ -2,10 +2,10 @@ const cds = require("@sap/cds");
 const moment = require("moment");
 const nodemailer = require("nodemailer");
 
-const expirationTimeinMin = 2;
-const blockPeriodInMin = 2;
-const doSpawn = true; // Enable the cleanup job
-const spawnIn = 10 * 1000; // 10 sec in ms
+const expirationTimeinMin = process.env.otpExpiryInMin || 2;
+const blockPeriodInMin = process.env.blockOtpInMin || 2;
+const doSpawn = process.env.cleanupDB || true; // Enable the cleanup job
+const spawnIn = process.env.cleanupFrequencyInHours * 60 * 60 * 1000 || 6 * 60 * 60 * 1000; // 10 sec in ms
 
 module.exports = cds.service.impl(async function () {
   const OTP = 'otp.OTP';
@@ -24,7 +24,14 @@ module.exports = cds.service.impl(async function () {
       }
 
       await upsertOtpEntry(userId, otp, expirationTime);
-      // await sendOtpEmail(otp, userId, expirationTimeinMin);
+      var sendOTP = await sendOtpEmail(otp, userId, expirationTimeinMin);
+      if (sendOTP === 'success') {
+        return {
+          status: "SUCCESS"
+        }
+      } else {
+        req.reject(400, 'OTP Send Failed')
+      }
     } catch (error) {
       console.log(error);
     }
@@ -36,34 +43,34 @@ module.exports = cds.service.impl(async function () {
     const tx = db.tx(req);
 
     // try {
-      const userOTP = await tx.run(SELECT.one.from(OTP).where({ userId }));
+    const userOTP = await tx.run(SELECT.one.from(OTP).where({ userId }));
 
-      if (!userOTP) {
-        return req.reject(400, "Invalid OTP");
-      }
+    if (!userOTP) {
+      return req.reject(400, "Invalid OTP");
+    }
 
-      if (isUserBlocked(userOTP)) {
-        return req.reject(401, "User is blocked. Please try again later.");
-      }
+    if (isUserBlocked(userOTP)) {
+      return req.reject(401, "User is blocked. Please try again later.");
+    }
 
-      if (userOTP.attemptCount >= 3) {
-        await blockUser(tx, userId);
-        return req.reject(429, "Too many incorrect attempts. User is blocked for 2 minutes.");
-      }
+    if (userOTP.attemptCount >= 3) {
+      await blockUser(tx, userId);
+      return req.reject(429, "Too many incorrect attempts. User is blocked for 2 minutes.");
+    }
 
-      if (userOTP.otp !== otp) {
-        await incrementAttemptCount(tx, userId, userOTP.attemptCount);
-        return req.reject(400, "Invalid OTP");
-      }
+    if (userOTP.otp !== otp) {
+      await incrementAttemptCount(tx, userId, userOTP.attemptCount);
+      return req.reject(400, "Invalid OTP");
+    }
 
-      if (userOTP.expirationTime < new Date()) {
-        return req.reject(400, "OTP expired. Please resend the OTP.");
-      }
+    if (userOTP.expirationTime < new Date()) {
+      return req.reject(400, "OTP expired. Please resend the OTP.");
+    }
 
-      await tx.run(DELETE.from(OTP).where({ userId }));
-      // await tx.commit();
+    await tx.run(DELETE.from(OTP).where({ userId }));
+    // await tx.commit();
 
-      return { status: "SUCCESS" };
+    return { status: "SUCCESS" };
     // } catch (error) {
     //   console.log(error);
     //   await tx.rollback();
@@ -129,8 +136,8 @@ async function sendOtpEmail(otp, email, expirationTimeinMin) {
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-      user: 'pallavjadav@gmail.com',
-      pass: 'aetchgbkavpcgtpp'
+      user: `${process.env.username}`,
+      pass: `${process.env.password}`
     },
   });
 
@@ -145,8 +152,10 @@ async function sendOtpEmail(otp, email, expirationTimeinMin) {
     const info = await transporter.sendMail(mailOptions);
     console.log("Message sent: %s", info.messageId);
     console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    return 'success'
   } catch (error) {
     console.error("Error sending email:", error);
+    return 'error'
   }
 }
 
