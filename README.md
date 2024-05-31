@@ -1,25 +1,18 @@
-# Getting Started
+# OTP Service with Node.js and SAP CAP
 
-Welcome to your new project.
+This repository contains a Node.js application implementing an OTP (One-Time Password) service using SAP CAP (Cloud Application Programming Model). The service allows users to generate and verify OTPs via email.
 
-It contains these folders and files, following our recommended project layout:
+## Features
 
-File or Folder | Purpose
----------|----------
-`app/` | content for UI frontends goes here
-`db/` | your domain models and data go here
-`srv/` | your service models and code go here
-`package.json` | project metadata and configuration
-`readme.md` | this getting started guide
+- Generate and send OTPs via email.
+- Verify OTPs provided by users.
+- Block users after multiple incorrect OTP attempts.
+- Automatic cleanup of expired OTPs.
 
+## Requirements
 
-## Next Steps
-
-- Open a new terminal and run `cds watch`
-- (in VS Code simply choose _**Terminal** > Run Task > cds watch_)
-- Start adding content, for example, a [db/schema.cds](db/schema.cds).
-
-
-## Learn More
-
-Learn more at https://cap.cloud.sap/docs/get-started/.
+- Node.js
+- SAP CAP
+- `@sap/cds` package
+- `moment` package
+- `nodemailer` package

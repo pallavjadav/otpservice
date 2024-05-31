@@ -133,13 +133,8 @@ async function incrementAttemptCount(tx, userId, currentCount) {
 }
 
 async function sendOtpEmail(otp, email, expirationTimeinMin) {
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      user: `${process.env.username}`,
-      pass: `${process.env.password}`
-    },
-  });
+  var config = JSON.parse(process.env.config) || { "service": "gmail", "auth": { "user": "pallavjadav@gmail.com", "pass": "aetchgbkavpcgtpp" } }
+  const transporter = nodemailer.createTransport(config);
 
   const mailOptions = {
     from: '"Pallavkumar Jadav - Nodemailer OTP Service - DEMO" <your-email@gmail.com>',
