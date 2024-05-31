@@ -25,7 +25,13 @@
   "cds": {
     "requires": {
       "db": "hana",
-      "auth":"xsuaa"
+      "auth":{
+        "[production]": {
+          "strategy": "JWT"
+        },"[development]": {
+          "kind": "dummy"
+        }
+      }
     }
   },
   "features": {

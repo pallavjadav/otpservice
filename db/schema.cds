@@ -7,7 +7,8 @@ entity OTP : managed {
   key ID         : UUID;
   userId         : Email;
   otp            : String(6);
-  createdAt      : DateTime;
+  expirationTime : DateTime; // Use expirationTime instead of createdAt
   attemptCount   : Integer default 0;
   blockedUntil   : DateTime;
 }
+
