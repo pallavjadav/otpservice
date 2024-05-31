@@ -78,7 +78,7 @@ module.exports = cds.service.impl(async function () {
     // }
   });
 
-  cds.spawn({ every: spawnIn }, async (tx) => {
+  let job = cds.spawn({ every: spawnIn }, async (tx) => {
     if (doSpawn) {
       console.log('Running cleanup job');
       await tx.run(
