@@ -4,6 +4,7 @@ using {otp} from '../db/schema';
 
 @protocol: ['rest']
 service OTPService {
+    @readonly
     entity OTP as projection on otp.OTP;
     action generateAndSendOTP(userId : Email) returns {
         status: String;

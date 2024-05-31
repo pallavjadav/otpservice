@@ -17,6 +17,7 @@
     "@cap-js/sqlite": "^1",
     "@sap/cds-dk": "^7",
     "@sap/eslint-plugin-cds": "^3",
+    "cds-swagger-ui-express": "^0.8.0",
     "eslint": "^9"
   },
   "scripts": {
@@ -25,10 +26,11 @@
   "cds": {
     "requires": {
       "db": "hana",
-      "auth":{
+      "auth": {
         "[production]": {
           "strategy": "JWT"
-        },"[development]": {
+        },
+        "[development]": {
           "kind": "dummy"
         }
       }
