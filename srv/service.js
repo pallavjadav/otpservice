@@ -24,7 +24,7 @@ module.exports = cds.service.impl(async function () {
         userOTP &&
         Date.parse(userOTP.blockedUntil) > Date.parse(new Date().toISOString())
       ) {
-        req.reject(400,"User is blocked. Please try again later.");
+        req.reject(400, "User is blocked. Please try again later.");
         // throw new Error("User is blocked. Please try again late");
       }
 
@@ -40,18 +40,22 @@ module.exports = cds.service.impl(async function () {
         });
       }
       await sendOtpEmail(otp, userId, expirationTimeinMin);
-    } catch (error) { 
+    } catch (error) {
       console.log(error)
     }
   });
 
   this.on("verifyOTP", async (req) => {
     const { userId, otp } = req.data;
+    const db = await cds.connect.to('db');
+    const tx = db.tx(req);
 
-    const userOTP = await SELECT.one.from(OTP).where({ userId });
+    // try {
+    const userOTP = await tx.run(SELECT.one.from(OTP).where({ userId }));
+    // await tx.commit();
 
     if (!userOTP) {
-      req.reject(400,"Invalid OTP");
+      req.reject(400, "Invalid OTP");
     }
 
     if (userOTP.blockedUntil > new Date()) {
@@ -59,21 +63,18 @@ module.exports = cds.service.impl(async function () {
     }
 
     if (userOTP.attemptCount >= 3) {
-      const db1 = cds.transaction(req)
-      await db1.run(UPDATE(OTP)
-        .set({ blockedUntil: new Date(Date.now() + 2 * 60000).toISOString() })
-        .where({ userId }));
-        db1.commit()
+      await tx.run(
+        UPDATE(OTP).set({ blockedUntil: new Date(Date.now() + 2 * 60000).toISOString() }).where({ userId })
+      );
+      await tx.commit();
       req.reject(429, "Too many incorrect attempts. User is blocked for 1 hour.");
     }
 
     if (userOTP.otp !== otp) {
-      const db2 = cds.transaction(req)
-
-      await db2.run(UPDATE(OTP)
-        .set({ attemptCount: userOTP.attemptCount + 1 })
-        .where({ userId }));
-        db2.commit()
+      await tx.run(
+        UPDATE(OTP).set({ attemptCount: userOTP.attemptCount + 1 }).where({ userId })
+      );
+      await tx.commit();
       req.reject(400, "Invalid OTP");
     }
 
@@ -81,13 +82,17 @@ module.exports = cds.service.impl(async function () {
       req.reject(400, "OTP expired. Please resend the OTP.");
     }
 
-    // OTP is correct
-    await DELETE.from(OTP).where({ userId });
+    // OTP is correct, delete the OTP entry
+    await tx.run(DELETE.from(OTP).where({ userId }));
+
+    // await tx.commit();
 
     return {
-      status: "SUCCCESS"
+      status: "SUCCESS"
     };
+
   });
+
 
   // Function to send OTP email
   async function sendOtpEmail(otp, email, expirationTimeinMin) {
@@ -186,5 +191,5 @@ module.exports = cds.service.impl(async function () {
     }
   }
 
-  
+
 });

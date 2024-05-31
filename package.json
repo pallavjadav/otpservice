@@ -24,12 +24,8 @@
   },
   "cds": {
     "requires": {
-      "db": {
-        "kind": "sqlite",
-        "credentials": {
-          "url": "db.sqlite"
-        }
-      }
+      "db": "hana",
+      "auth":"xsuaa"
     }
   },
   "features": {

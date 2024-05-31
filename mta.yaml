@@ -26,6 +26,15 @@ modules:
           srv-url: ${default-url}
     requires:
       - name: otpservice-auth
+      - name: otpservice-db
+
+  - name: otpservice-db-deployer
+    type: hdb
+    path: gen/db
+    parameters:
+      buildpack: nodejs_buildpack
+    requires:
+      - name: otpservice-db
 
 resources:
   - name: otpservice-auth
@@ -35,5 +44,10 @@ resources:
       service-plan: application
       path: ./xs-security.json
       config:
-        xsappname: otpservice-${org}-${space}
+        xsappname: otpservice
         tenant-mode: dedicated
+  - name: otpservice-db
+    type: com.sap.xs.hdi-container
+    parameters:
+      service: hana
+      service-plan: hdi-shared
