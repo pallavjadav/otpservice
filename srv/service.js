@@ -4,7 +4,7 @@ const nodemailer = require("nodemailer");
 
 const expirationTimeinMin = process.env.otpExpiryInMin || 2;
 const blockPeriodInMin = process.env.blockOtpInMin || 2;
-const doSpawn = process.env.cleanupDB || true; // Enable the cleanup job
+const doSpawn = process.env.isCleanupDB || true; // Enable the cleanup job
 const spawnIn = process.env.cleanupFrequencyInHours * 60 * 60 * 1000 || 6 * 60 * 60 * 1000; // 10 sec in ms
 
 module.exports = cds.service.impl(async function () {
