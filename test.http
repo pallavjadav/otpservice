@@ -6,11 +6,19 @@ Content-Type: application/json
     "userId":"pallavjadav@gmail.com"
 }
 
+### generate and send otp in mail
+POST http://localhost:4004/rest/otp/generateAndSendOTPbyMail
+Content-Type: application/json
+
+{
+    "userId":"pallavjadav@gmail.com"
+}
+
 ###
 POST http://localhost:4004/rest/otp/verifyOTP
 Content-Type: application/json
 
 {
     "userId":"pallavjadav@gmail.com",
-    "otp":"197126"
+    "otp":"197135"
 }

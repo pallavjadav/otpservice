@@ -1,6 +1,8 @@
 const cds = require("@sap/cds");
 const moment = require("moment");
 const nodemailer = require("nodemailer");
+const log = require('cf-nodejs-logging-support');
+
 
 const expirationTimeinMin = process.env.otpExpiryInMin || 2;
 const blockPeriodInMin = process.env.blockOtpInMin || 2;
@@ -24,6 +26,30 @@ module.exports = cds.service.impl(async function () {
       }
 
       await upsertOtpEntry(userId, otp, expirationTime);
+      
+        return {
+          OTP: otp,
+          status: "SUCCESS"
+        }
+      
+    } catch (error) {
+      log.error(error);
+    }
+  })
+  this.on("generateAndSendOTPbyMail", async (req) => {
+    try {
+      const { userId } = req.data;
+      const otp = generateOtp();
+      const expirationTime = moment().add(expirationTimeinMin, "minutes").toDate();
+      const blockedUntil = moment().add(blockPeriodInMin, "minutes").toDate();
+
+      const userOTP = await SELECT.one.from(OTP).where({ userId });
+
+      if (isUserBlocked(userOTP)) {
+        return req.reject(400, "User is blocked. Please try again later.");
+      }
+
+      await upsertOtpEntry(userId, otp, expirationTime);
       var sendOTP = await sendOtpEmail(otp, userId, expirationTimeinMin);
       if (sendOTP === 'success') {
         return {
@@ -33,7 +59,7 @@ module.exports = cds.service.impl(async function () {
         req.reject(400, 'OTP Send Failed')
       }
     } catch (error) {
-      console.log(error);
+      log.error(error);
     }
   });
 
@@ -53,7 +79,7 @@ module.exports = cds.service.impl(async function () {
       return req.reject(401, "User is blocked. Please try again later.");
     }
 
-    if (userOTP.attemptCount >= 3) {
+    if (userOTP.attemptCount >= (parseInt(process.env.blockAttempt) || 3)) {
       await blockUser(tx, userId);
       return req.reject(429, "Too many incorrect attempts. User is blocked for 2 minutes.");
     }
@@ -72,7 +98,7 @@ module.exports = cds.service.impl(async function () {
 
     return { status: "SUCCESS" };
     // } catch (error) {
-    //   console.log(error);
+    //   log.info(error);
     //   await tx.rollback();
     //   req.reject(500, "Internal Server Error");
     // }
@@ -80,7 +106,7 @@ module.exports = cds.service.impl(async function () {
 
   let job = cds.spawn({ every: spawnIn }, async (tx) => {
     if (doSpawn) {
-      console.log('Running cleanup job');
+      log.info('Running cleanup job');
       await tx.run(
         DELETE.from(OTP).where({ expirationTime: { '<': new Date().toISOString() } })
       );
@@ -145,11 +171,11 @@ async function sendOtpEmail(otp, email, expirationTimeinMin) {
 
   try {
     const info = await transporter.sendMail(mailOptions);
-    console.log("Message sent: %s", info.messageId);
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
+    log.info("Message sent: %s", info.messageId);
+    log.info("Preview URL: %s", nodemailer.getTestMessageUrl(info));
     return 'success'
   } catch (error) {
-    console.error("Error sending email:", error);
+    log.error("Error sending email:", error);
     return 'error'
   }
 }

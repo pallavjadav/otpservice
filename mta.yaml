@@ -27,6 +27,7 @@ modules:
     requires:
       - name: otpservice-auth
       - name: otpservice-db
+      - name: otpservice-logging
 
   - name: otpservice-db-deployer
     type: hdb
@@ -51,3 +52,8 @@ resources:
     parameters:
       service: hana
       service-plan: hdi-shared
+  - name: otpservice-logging
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: lite

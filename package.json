@@ -7,6 +7,7 @@
   "private": true,
   "dependencies": {
     "@sap/cds": "^7",
+    "cf-nodejs-logging-support": "^7.2.0",
     "@sap/cds-hana": "^2",
     "@sap/xssec": "^3.6.1",
     "express": "^4",
@@ -37,6 +38,7 @@
     }
   },
   "features": {
+    "kibana_formatter": true,
     "rest_new_adapter": true
   }
 }
