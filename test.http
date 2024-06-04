@@ -14,7 +14,7 @@ Content-Type: application/json
     "userId":"pallavjadav@gmail.com"
 }
 
-###
+### Verify OTP
 POST http://localhost:4004/rest/otp/verifyOTP
 Content-Type: application/json
 
